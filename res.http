@@ -1,0 +1,40 @@
+### Create a new product
+POST http://localhost:8000/products
+Content-Type: application/json
+
+{
+    "name": "Sample Product",
+    "description": "A sample product description",
+    "price": 19.99,
+    "stock": 100
+}
+
+###
+
+### Get all products
+GET http://localhost:8000/products
+
+###
+
+### Get a single product by ID
+GET http://localhost:8000/products/1
+
+###
+
+### Update a product by ID
+PUT http://localhost:8000/products/1
+Content-Type: application/json
+
+{
+    "name": "Updated Product",
+    "description": "Updated description",
+    "price": 24.99,
+    "stock": 80
+}
+
+###
+
+### Delete a product by ID
+DELETE http://localhost:8000/products/1
+
+###

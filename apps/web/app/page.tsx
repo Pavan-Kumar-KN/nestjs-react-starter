@@ -1,102 +1,130 @@
-import Image, { type ImageProps } from "next/image";
-import { Button } from "@repo/ui/button";
-import styles from "./page.module.css";
+"use client";
 
-type Props = Omit<ImageProps, "src"> & {
-  srcLight: string;
-  srcDark: string;
-};
+import { useEffect, useState } from "react";
+import { Product } from "@repo/types";
 
-const ThemeImage = (props: Props) => {
-  const { srcLight, srcDark, ...rest } = props;
 
-  return (
-    <>
-      <Image {...rest} src={srcLight} className="imgLight" />
-      <Image {...rest} src={srcDark} className="imgDark" />
-    </>
-  );
-};
+const API_URL = "http://localhost:8000/products";
 
 export default function Home() {
-  return (
-    <div className={styles.page}>
-      <main className={styles.main}>
-        <ThemeImage
-          className={styles.logo}
-          srcLight="turborepo-dark.svg"
-          srcDark="turborepo-light.svg"
-          alt="Turborepo logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol>
-          <li>
-            Get started by editing <code>apps/web/app/page.tsx</code>
-          </li>
-          <li>Save and see your changes instantly.</li>
-        </ol>
+  const [products, setProducts] = useState<Product[]>([]);
+  const [name, setName] = useState("");
+  const [price, setPrice] = useState<number>(0);
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
 
-        <div className={styles.ctas}>
-          <a
-            className={styles.primary}
-            href="https://vercel.com/new/clone?demo-description=Learn+to+implement+a+monorepo+with+a+two+Next.js+sites+that+has+installed+three+local+packages.&demo-image=%2F%2Fimages.ctfassets.net%2Fe5382hct74si%2F4K8ZISWAzJ8X1504ca0zmC%2F0b21a1c6246add355e55816278ef54bc%2FBasic.png&demo-title=Monorepo+with+Turborepo&demo-url=https%3A%2F%2Fexamples-basic-web.vercel.sh%2F&from=templates&project-name=Monorepo+with+Turborepo&repository-name=monorepo-turborepo&repository-url=https%3A%2F%2Fgithub.com%2Fvercel%2Fturborepo%2Ftree%2Fmain%2Fexamples%2Fbasic&root-directory=apps%2Fdocs&skippable-integrations=1&teamSlug=vercel&utm_source=create-turbo"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className={styles.logo}
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            href="https://turborepo.com/docs?utm_source"
-            target="_blank"
-            rel="noopener noreferrer"
-            className={styles.secondary}
-          >
-            Read our docs
-          </a>
-        </div>
-        <Button appName="web" className={styles.secondary}>
-          Open alert
-        </Button>
-      </main>
-      <footer className={styles.footer}>
-        <a
-          href="https://vercel.com/templates?search=turborepo&utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          href="https://turborepo.com?utm_source=create-turbo"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to turborepo.com →
-        </a>
-      </footer>
+  // Fetch products
+  const fetchProducts = async () => {
+    const res = await fetch(API_URL);
+    const data = await res.json();
+    setProducts(data);
+  };
+
+  useEffect(() => {
+    fetchProducts();
+  }, []);
+
+  // Create or Update
+  const handleSubmit = async () => {
+    setLoading(true);
+
+    const payload = { name, price };
+
+    if (editingId) {
+      await fetch(`${API_URL}/${editingId}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+    } else {
+      await fetch(API_URL, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+    }
+
+    setName("");
+    setPrice(0);
+    setEditingId(null);
+    setLoading(false);
+    fetchProducts();
+  };
+
+  // Edit
+  const handleEdit = (product: Product) => {
+    setName(product.name);
+    setPrice(product.price);
+    setEditingId(product.id);
+  };
+
+  // Delete
+  const handleDelete = async (id: string) => {
+    await fetch(`${API_URL}/${id}`, {
+      method: "DELETE",
+    });
+    fetchProducts();
+  };
+
+  return (
+    <div style={{ padding: 24, maxWidth: 600, margin: "0 auto" }}>
+      <h2>Products</h2>
+
+      {/* Form */}
+      <div style={{ marginBottom: 20 }}>
+        <input
+          placeholder="Product name"
+          value={name}
+          onChange={(e) => setName(e.target.value)}
+          style={{ padding: 8, marginRight: 8 }}
+        />
+        <input
+          type="number"
+          placeholder="Price"
+          value={price}
+          onChange={(e) => setPrice(Number(e.target.value))}
+          style={{ padding: 8, marginRight: 8 }}
+        />
+        <button onClick={handleSubmit} disabled={loading}>
+          {editingId ? "Update" : "Create"}
+        </button>
+      </div>
+
+      {/* Table */}
+      <table width="100%" border={1} cellPadding={8}>
+        <thead>
+          <tr>
+            <th>Name</th>
+            <th>Price</th>
+            <th width="150">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {products.map((p) => (
+            <tr key={p.id}>
+              <td>{p.name}</td>
+              <td>₹{p.price}</td>
+              <td>
+                <button onClick={() => handleEdit(p)}>Edit</button>
+                <button
+                  onClick={() => handleDelete(p.id)}
+                  style={{ marginLeft: 8 }}
+                >
+                  Delete
+                </button>
+              </td>
+            </tr>
+          ))}
+
+          {products.length === 0 && (
+            <tr>
+              <td colSpan={3} align="center">
+                No products found
+              </td>
+            </tr>
+          )}
+        </tbody>
+      </table>
     </div>
   );
 }
