@@ -97,7 +97,7 @@ export default function Home() {
           <tr>
             <th>Name</th>
             <th>Price</th>
-            <th width="150">Actions</th>
+            <th>Actions</th>
           </tr>
         </thead>
         <tbody>
