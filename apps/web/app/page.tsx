@@ -4,8 +4,9 @@ import { useEffect, useState } from "react";
 import { Product } from "@repo/types";
 
 
-const API_URL = "http://localhost:8000/products";
+const API_URL = process.env.API_URL + "/products";
 
+console.log("API_URL:", process.env.API_URL);
 export default function Home() {
   const [products, setProducts] = useState<Product[]>([]);
   const [name, setName] = useState("");
